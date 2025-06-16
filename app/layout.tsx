@@ -8,8 +8,8 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "単語ネットワーク可視化",
-  description: "単語間の類似度に基づくネットワーク可視化",
-    generator: 'v0.dev'
+  description: "単語間の類似度に基づくネットワーク可視化ツール",
+  generator: "v0.dev",
 }
 
 export default function RootLayout({

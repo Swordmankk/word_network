@@ -1,37 +1,27 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import WordNetwork from "@/components/word-network"
 import { ThresholdSlider } from "@/components/threshold-slider"
 import { TimeFilter } from "@/components/time-filter"
 import { PeriodSelector } from "@/components/period-selector"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Settings, X, Maximize2, Minimize2 } from "lucide-react"
 
 export default function Home() {
   const [showSettings, setShowSettings] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen)
-    setShowSettings(false) // フルスクリーン時は設定を閉じる
+    setShowSettings(false)
   }
 
-  if (isFullscreen && isMobile) {
+  if (isFullscreen) {
     return (
       <div className="fixed inset-0 bg-background z-50">
-        <div className="absolute top-2 right-2 z-10 flex gap-2">
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -46,13 +36,16 @@ export default function Home() {
         </div>
 
         {showSettings && (
-          <div className="absolute top-16 right-2 left-2 bg-card/95 backdrop-blur-sm border rounded-lg p-4 z-10 max-h-80 overflow-y-auto">
-            <div className="space-y-4">
+          <Card className="absolute top-16 right-4 left-4 sm:left-auto sm:w-80 z-10 max-h-96 overflow-y-auto">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">設定</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <PeriodSelector />
               <ThresholdSlider />
               <TimeFilter />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         <div className="w-full h-full">
@@ -63,114 +56,112 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col">
-      {/* モバイル用ヘッダー */}
-      <div className="bg-background border-b px-3 py-3 md:px-8 md:py-4 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg sm:text-xl md:text-3xl font-bold truncate">単語ネットワーク可視化</h1>
-
-          <div className="flex items-center gap-2">
-            {isMobile && (
-              <Button variant="outline" size="sm" onClick={toggleFullscreen}>
+    <div className="min-h-screen bg-background p-2 sm:p-4 lg:p-6">
+      <div className="h-[calc(100vh-1rem)] sm:h-[calc(100vh-2rem)] lg:h-[calc(100vh-3rem)] grid grid-cols-1 xl:grid-cols-4 gap-4 lg:gap-6">
+        {/* 設定パネル - デスクトップ */}
+        <Card className="hidden xl:block xl:col-span-1">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between text-lg">
+              設定
+              <Button variant="ghost" size="sm" onClick={toggleFullscreen}>
                 <Maximize2 className="h-4 w-4" />
               </Button>
-            )}
-            <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setShowSettings(!showSettings)}>
-              {showSettings ? <X className="h-4 w-4" /> : <Settings className="h-4 w-4" />}
-              <span className="ml-2 hidden sm:inline">{showSettings ? "閉じる" : "設定"}</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
-        {/* デスクトップ用サイドバー */}
-        <div className="hidden lg:block lg:w-80 lg:flex-shrink-0 bg-card border-r">
-          <div className="p-6 space-y-6 h-full overflow-y-auto">
-            <h2 className="text-xl font-semibold">設定</h2>
-
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
             <div className="border-b pb-4">
-              <h3 className="text-lg font-medium mb-3">期間設定</h3>
+              <h3 className="text-sm font-medium mb-3">期間設定</h3>
               <PeriodSelector />
             </div>
-
             <ThresholdSlider />
             <TimeFilter />
 
-            <div className="mt-8">
-              <h3 className="text-lg font-medium mb-2">ノードサイズの凡例</h3>
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-gray-500 mr-2 flex-shrink-0"></div>
-                  <span className="text-sm">1時間未満</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-6 h-6 rounded-full bg-gray-500 mr-2 flex-shrink-0"></div>
-                  <span className="text-sm">1〜5時間</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-9 h-9 rounded-full bg-gray-500 mr-2 flex-shrink-0"></div>
-                  <span className="text-sm">5〜10時間</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-full bg-gray-500 mr-2 flex-shrink-0"></div>
-                  <span className="text-sm">10時間以上</span>
-                </div>
+            <div className="pt-4">
+              <h3 className="text-sm font-medium mb-3">ノードサイズの凡例</h3>
+              <div className="space-y-2">
+                {[
+                  { size: "w-2 h-2", label: "1時間未満" },
+                  { size: "w-4 h-4", label: "1〜5時間" },
+                  { size: "w-6 h-6", label: "5〜10時間" },
+                  { size: "w-8 h-8", label: "10時間以上" },
+                ].map((item, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className={`${item.size} rounded-full bg-primary/60 flex-shrink-0`}></div>
+                    <span className="text-xs text-muted-foreground">{item.label}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* モバイル用設定パネル */}
-        {showSettings && (
-          <div className="lg:hidden bg-card border-b flex-shrink-0">
-            <div className="p-3 sm:p-4 space-y-4 max-h-80 overflow-y-auto mobile-scroll">
-              <div className="border-b pb-3">
-                <h3 className="text-sm sm:text-base font-medium mb-2">期間設定</h3>
-                <PeriodSelector />
+        {/* ネットワーク表示エリア */}
+        <div className="xl:col-span-3">
+          <Card className="h-full">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">単語ネットワーク</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="xl:hidden"
+                    onClick={() => setShowSettings(!showSettings)}
+                  >
+                    {showSettings ? <X className="h-4 w-4" /> : <Settings className="h-4 w-4" />}
+                    <span className="ml-2 hidden sm:inline">{showSettings ? "閉じる" : "設定"}</span>
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={toggleFullscreen}>
+                    <Maximize2 className="h-4 w-4" />
+                    <span className="ml-2 hidden sm:inline">フルスクリーン</span>
+                  </Button>
+                </div>
               </div>
+            </CardHeader>
 
-              <ThresholdSlider />
-              <TimeFilter />
+            {/* モバイル設定パネル */}
+            {showSettings && (
+              <div className="xl:hidden border-b bg-muted/50">
+                <div className="p-4 space-y-4 max-h-80 overflow-y-auto">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-sm font-medium mb-2">期間設定</h3>
+                      <PeriodSelector />
+                    </div>
+                    <div>
+                      <ThresholdSlider />
+                    </div>
+                  </div>
+                  <TimeFilter />
 
-              <div>
-                <h3 className="text-sm sm:text-base font-medium mb-2">ノードサイズ</h3>
-                <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
-                  <div className="flex items-center">
-                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-gray-500 mr-2 flex-shrink-0"></div>
-                    <span>1時間未満</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-full bg-gray-500 mr-2 flex-shrink-0"></div>
-                    <span>1〜5時間</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-full bg-gray-500 mr-2 flex-shrink-0"></div>
-                    <span>5〜10時間</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gray-500 mr-2 flex-shrink-0"></div>
-                    <span>10時間以上</span>
+                  <div className="pt-2">
+                    <h3 className="text-sm font-medium mb-2">ノードサイズ</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { size: "w-2 h-2", label: "1時間未満" },
+                        { size: "w-4 h-4", label: "1〜5時間" },
+                        { size: "w-6 h-6", label: "5〜10時間" },
+                        { size: "w-8 h-8", label: "10時間以上" },
+                      ].map((item, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <div className={`${item.size} rounded-full bg-primary/60 flex-shrink-0`}></div>
+                          <span className="text-xs text-muted-foreground">{item.label}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* メインコンテンツエリア */}
-        <div className="flex-1 bg-card min-h-0">
-          <div
-            className="w-full h-full"
-            style={{
-              height: showSettings ? "calc(100vh - 120px - 320px)" : "calc(100vh - 120px)",
-              minHeight: "300px",
-            }}
-          >
-            <WordNetwork />
-          </div>
+            <CardContent className="p-0 h-full">
+              <div className="w-full h-full" style={{ height: "calc(100% - 80px)" }}>
+                <WordNetwork />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </main>
+    </div>
   )
 }
