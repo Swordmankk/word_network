@@ -64,11 +64,41 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
-}
 
-/* 小さな画面でのタッチ操作最適化 */
-@media (max-width: 768px) {
   .touch-manipulation {
     touch-action: manipulation;
+  }
+}
+
+/* 小さな画面での最適化 */
+@media (max-width: 480px) {
+  .touch-manipulation {
+    touch-action: pan-x pan-y pinch-zoom;
+  }
+
+  /* 小さなフォントサイズの調整 */
+  .text-xs {
+    font-size: 0.7rem;
+  }
+
+  /* ボタンのタッチターゲットサイズ確保 */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* 横画面での調整 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .mobile-landscape-adjust {
+    padding: 0.5rem;
+  }
+}
+
+/* 高解像度ディスプレイでの調整 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .high-dpi-text {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }

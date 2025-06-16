@@ -37,20 +37,31 @@ export default function WordNetwork() {
   const graphRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
-  const [isMobile, setIsMobile] = useState(false)
+  const [deviceInfo, setDeviceInfo] = useState({
+    isMobile: false,
+    isSmallMobile: false,
+    isLandscape: false,
+  })
   const { theme } = useTheme()
   const { threshold, minTime, maxTime, selectedPeriod } = useWordNetworkStore()
 
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] })
   const [loading, setLoading] = useState(true)
 
-  // モバイル判定とリサイズ処理
+  // デバイス情報とリサイズ処理
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect()
-        const mobile = window.innerWidth < 768
-        setIsMobile(mobile)
+        const width = window.innerWidth
+        const height = window.innerHeight
+
+        setDeviceInfo({
+          isMobile: width < 768,
+          isSmallMobile: width < 480,
+          isLandscape: width > height,
+        })
+
         setDimensions({
           width: rect.width,
           height: rect.height,
@@ -68,9 +79,13 @@ export default function WordNetwork() {
     }
 
     window.addEventListener("resize", updateDimensions)
+    window.addEventListener("orientationchange", () => {
+      setTimeout(updateDimensions, 100) // 向き変更後の遅延
+    })
 
     return () => {
       window.removeEventListener("resize", updateDimensions)
+      window.removeEventListener("orientationchange", updateDimensions)
       resizeObserver.disconnect()
     }
   }, [])
@@ -137,20 +152,67 @@ export default function WordNetwork() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 md:h-12 md:w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 md:h-12 md:w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     )
   }
 
+  // デバイス別の設定
+  const getNodeSize = (time: number) => {
+    let baseMultiplier = 1
+    if (deviceInfo.isSmallMobile) {
+      baseMultiplier = 0.5
+    } else if (deviceInfo.isMobile) {
+      baseMultiplier = 0.7
+    }
+
+    if (time >= 10) {
+      return 12 * baseMultiplier
+    } else if (time >= 5) {
+      return 9 * baseMultiplier
+    } else if (time >= 1) {
+      return 6 * baseMultiplier
+    } else {
+      return 3 * baseMultiplier
+    }
+  }
+
+  const getFontSize = (globalScale: number) => {
+    let baseFontSize = 12
+    if (deviceInfo.isSmallMobile) {
+      baseFontSize = 8
+    } else if (deviceInfo.isMobile) {
+      baseFontSize = 10
+    }
+    return Math.max(6, baseFontSize / globalScale)
+  }
+
+  const getLinkWidth = (value: number) => {
+    let multiplier = 4
+    if (deviceInfo.isSmallMobile) {
+      multiplier = 1.5
+    } else if (deviceInfo.isMobile) {
+      multiplier = 2
+    }
+    return Math.max(0.5, value * multiplier)
+  }
+
   return (
-    <div ref={containerRef} className="w-full h-full relative">
+    <div ref={containerRef} className="w-full h-full relative touch-manipulation">
       {/* 期間情報表示 */}
       {selectedPeriod !== "all" && (
-        <div className="absolute top-2 left-2 z-10 bg-background/90 backdrop-blur-sm p-2 md:p-3 rounded-md text-xs md:text-sm border shadow-sm">
-          <div className="font-medium text-xs md:text-sm">
+        <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10 bg-background/90 backdrop-blur-sm p-1.5 sm:p-2 md:p-3 rounded text-xs border shadow-sm max-w-48 sm:max-w-none">
+          <div className="font-medium text-xs sm:text-sm truncate">
             {availablePeriods.find((p) => p.value === selectedPeriod)?.label}
           </div>
-          <div className="text-xs mt-1 text-muted-foreground">ノード数: {graphData.nodes.length}</div>
+          <div className="text-xs mt-1 text-muted-foreground">ノード: {graphData.nodes.length}</div>
+        </div>
+      )}
+
+      {/* モバイル用操作ヒント */}
+      {deviceInfo.isMobile && graphData.nodes.length > 0 && (
+        <div className="absolute bottom-1 left-1 right-1 z-10 bg-background/80 backdrop-blur-sm p-2 rounded text-xs text-center text-muted-foreground border">
+          ピンチでズーム・ドラッグで移動
         </div>
       )}
 
@@ -160,47 +222,44 @@ export default function WordNetwork() {
         width={dimensions.width}
         height={dimensions.height}
         graphData={graphData}
-        nodeLabel={(node: any) => `${node.word}\n時間: ${node.time}時間\n期間: ${node.period}`}
+        nodeLabel={(node: any) => {
+          if (deviceInfo.isMobile) {
+            return `${node.word}\n${node.time}h`
+          }
+          return `${node.word}\n時間: ${node.time}時間\n期間: ${node.period}`
+        }}
         nodeColor={(node: any) => {
-          // K-meansクラスタリングに基づいた色分け
           const colors = ["#ff6b6b", "#48dbfb", "#1dd1a1", "#feca57", "#54a0ff", "#5f27cd", "#ff9ff3", "#00d2d3"]
           return colors[node.group % colors.length]
         }}
-        nodeRelSize={isMobile ? 4 : 6} // モバイルでは小さく
-        nodeVal={(node: any) => {
-          // Size based on time thresholds (モバイルでは小さく)
-          const sizeMultiplier = isMobile ? 0.7 : 1
-          if (node.time >= 10) {
-            return 12 * sizeMultiplier // Extra large for 10+ hours
-          } else if (node.time >= 5) {
-            return 9 * sizeMultiplier // Large for 5-10 hours
-          } else if (node.time >= 1) {
-            return 6 * sizeMultiplier // Medium for 1-5 hours
-          } else {
-            return 3 * sizeMultiplier // Small for less than 1 hour
-          }
-        }}
-        linkWidth={(link: any) => Math.max(0.5, link.value * (isMobile ? 2 : 4))}
+        nodeRelSize={deviceInfo.isSmallMobile ? 3 : deviceInfo.isMobile ? 4 : 6}
+        nodeVal={(node: any) => getNodeSize(node.time)}
+        linkWidth={(link: any) => getLinkWidth(link.value)}
         linkColor={() => (theme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)")}
         backgroundColor={theme === "dark" ? "#1a1a1a" : "#ffffff"}
         nodeCanvasObjectMode={() => "after"}
         nodeCanvasObject={(node: any, ctx: any, globalScale: number) => {
-          // Draw node label
           const label = node.word
-          const baseFontSize = isMobile ? 10 : 12
-          const fontSize = Math.max(6, baseFontSize / globalScale)
+          const fontSize = getFontSize(globalScale)
           ctx.font = `${fontSize}px Sans-Serif`
           ctx.textAlign = "center"
           ctx.textBaseline = "middle"
           ctx.fillStyle = theme === "dark" ? "white" : "black"
 
-          // Add text shadow for better readability
+          // テキストシャドウ
           ctx.shadowColor = theme === "dark" ? "black" : "white"
           ctx.shadowBlur = 1
 
-          // モバイルでは短縮表示
-          const displayLabel = isMobile && label.length > 8 ? label.substring(0, 6) + "..." : label
-          ctx.fillText(displayLabel, node.x, node.y + (isMobile ? 12 : 15))
+          // モバイルでの表示調整
+          let displayLabel = label
+          if (deviceInfo.isSmallMobile && label.length > 6) {
+            displayLabel = label.substring(0, 4) + "..."
+          } else if (deviceInfo.isMobile && label.length > 8) {
+            displayLabel = label.substring(0, 6) + "..."
+          }
+
+          const yOffset = deviceInfo.isSmallMobile ? 10 : deviceInfo.isMobile ? 12 : 15
+          ctx.fillText(displayLabel, node.x, node.y + yOffset)
           ctx.shadowBlur = 0
         }}
         onNodeHover={(node: any) => {
@@ -208,10 +267,14 @@ export default function WordNetwork() {
             containerRef.current.style.cursor = node ? "pointer" : "default"
           }
         }}
-        // モバイルでのパフォーマンス最適化
-        cooldownTicks={isMobile ? 50 : 100}
-        d3AlphaDecay={isMobile ? 0.05 : 0.0228}
-        d3VelocityDecay={isMobile ? 0.3 : 0.4}
+        // パフォーマンス最適化
+        cooldownTicks={deviceInfo.isSmallMobile ? 30 : deviceInfo.isMobile ? 50 : 100}
+        d3AlphaDecay={deviceInfo.isMobile ? 0.05 : 0.0228}
+        d3VelocityDecay={deviceInfo.isMobile ? 0.3 : 0.4}
+        // タッチ操作の最適化
+        enableNodeDrag={!deviceInfo.isMobile} // モバイルではノードドラッグを無効化
+        enableZoomInteraction={true}
+        enablePanInteraction={true}
       />
     </div>
   )
