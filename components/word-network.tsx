@@ -36,7 +36,6 @@ interface GraphData {
 
 export default function WordNetwork() {
   const graphRef = useRef<any>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
   const [isMobile, setIsMobile] = useState(false)
   const { theme } = useTheme()
@@ -47,37 +46,23 @@ export default function WordNetwork() {
   // 固定の閾値（普通の関連性）
   const threshold = 0.5
 
-  // リサイズ処理
+  // 画面全体のサイズを取得
   useEffect(() => {
     const updateDimensions = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect()
-        const width = window.innerWidth
-        const height = window.innerHeight
+      const width = window.innerWidth
+      const height = window.innerHeight
 
-        setIsMobile(width < 768)
-
-        if (width < 768) {
-          setDimensions({ width, height })
-        } else {
-          setDimensions({ width: rect.width, height: rect.height })
-        }
-      }
+      setIsMobile(width < 768)
+      setDimensions({ width, height })
     }
 
     updateDimensions()
-    const resizeObserver = new ResizeObserver(updateDimensions)
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current)
-    }
-
     window.addEventListener("resize", updateDimensions)
     window.addEventListener("orientationchange", () => setTimeout(updateDimensions, 200))
 
     return () => {
       window.removeEventListener("resize", updateDimensions)
       window.removeEventListener("orientationchange", updateDimensions)
-      resizeObserver.disconnect()
     }
   }, [])
 
@@ -161,7 +146,8 @@ export default function WordNetwork() {
   }
 
   return (
-    <div ref={containerRef} className="w-full h-full relative touch-manipulation overflow-hidden">
+    <div className="w-full h-full relative">
+      {/* 期間情報表示 */}
       {selectedPeriod !== "all" && (
         <div className="absolute top-2 left-2 z-10 bg-background/90 backdrop-blur-sm p-2 rounded text-xs border shadow-sm">
           <div className="font-medium truncate">{availablePeriods.find((p) => p.value === selectedPeriod)?.label}</div>
@@ -169,12 +155,14 @@ export default function WordNetwork() {
         </div>
       )}
 
+      {/* モバイル用操作ヒント */}
       {isMobile && graphData.nodes.length > 0 && (
         <div className="absolute bottom-2 left-2 right-2 z-10 bg-background/80 backdrop-blur-sm p-2 rounded text-xs text-center text-muted-foreground border">
           ピンチでズーム・ドラッグで移動
         </div>
       )}
 
+      {/* グラフ表示 - 画面全体 */}
       <ForceGraph2D
         ref={graphRef}
         width={dimensions.width}
@@ -214,9 +202,8 @@ export default function WordNetwork() {
           ctx.shadowOffsetY = 0
         }}
         onNodeHover={(node: any) => {
-          if (containerRef.current) {
-            containerRef.current.style.cursor = node ? "pointer" : "default"
-          }
+          // カーソルスタイルの変更（全画面なのでdocument.bodyを使用）
+          document.body.style.cursor = node ? "pointer" : "default"
         }}
         onEngineStop={() => {
           if (graphRef.current && graphData.nodes.length > 0) {
@@ -228,7 +215,7 @@ export default function WordNetwork() {
         cooldownTicks={isMobile ? 40 : 100}
         d3AlphaDecay={isMobile ? 0.05 : 0.0228}
         d3VelocityDecay={isMobile ? 0.3 : 0.4}
-        enableNodeDrag={!isMobile}
+        enableNodeDrag={true} // 全画面なのでドラッグを有効化
         enableZoomInteraction={true}
         enablePanInteraction={true}
         d3Force="charge"

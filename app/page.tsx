@@ -72,41 +72,26 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 lg:p-6">
-      <div className="h-[calc(100vh-2rem)] lg:h-[calc(100vh-3rem)] grid grid-cols-1 xl:grid-cols-4 gap-6">
-        <Card className="hidden xl:block xl:col-span-1">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between text-lg">
-              設定
-              <Button variant="ghost" size="sm" onClick={toggleFullscreen}>
-                <Maximize2 className="h-4 w-4" />
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <PeriodSelector />
-            <TimeFilter />
-          </CardContent>
-        </Card>
+    <div className="min-h-screen bg-background relative">
+      {/* 設定パネル - デスクトップ */}
+      <Card className="absolute top-4 left-4 w-80 z-10 bg-card/95 backdrop-blur-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center justify-between text-lg">
+            設定
+            <Button variant="ghost" size="sm" onClick={toggleFullscreen}>
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <PeriodSelector />
+          <TimeFilter />
+        </CardContent>
+      </Card>
 
-        <div className="xl:col-span-3">
-          <Card className="h-full">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">単語ネットワーク</CardTitle>
-                <Button variant="outline" size="sm" onClick={toggleFullscreen}>
-                  <Maximize2 className="h-4 w-4" />
-                  <span className="ml-2 hidden sm:inline">フルスクリーン</span>
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0 h-full">
-              <div className="w-full" style={{ height: "calc(100% - 80px)" }}>
-                <WordNetwork />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* ネットワーク表示エリア - 画面全体 */}
+      <div className="fixed inset-0">
+        <WordNetwork />
       </div>
     </div>
   )
