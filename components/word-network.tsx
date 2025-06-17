@@ -66,10 +66,18 @@ export default function WordNetwork() {
           isLandscape: width > height,
         })
 
-        setDimensions({
-          width: rect.width,
-          height: rect.height,
-        })
+        // モバイルでは画面全体のサイズを使用
+        if (width < 768) {
+          setDimensions({
+            width: width,
+            height: height,
+          })
+        } else {
+          setDimensions({
+            width: rect.width,
+            height: rect.height,
+          })
+        }
       }
     }
 
@@ -84,7 +92,7 @@ export default function WordNetwork() {
 
     window.addEventListener("resize", updateDimensions)
     window.addEventListener("orientationchange", () => {
-      setTimeout(updateDimensions, 100) // 向き変更後の遅延
+      setTimeout(updateDimensions, 200) // 向き変更後の遅延を増加
     })
 
     return () => {
@@ -157,15 +165,17 @@ export default function WordNetwork() {
   useEffect(() => {
     if (graphRef.current && graphData.nodes.length > 0) {
       // グラフを中央に配置
-      graphRef.current.centerAt(0, 0, 1000)
-      graphRef.current.zoom(1, 1000)
+      setTimeout(() => {
+        graphRef.current.centerAt(0, 0, 1000)
+        graphRef.current.zoom(deviceInfo.isMobile ? 0.8 : 1, 1000)
+      }, 100)
     }
-  }, [graphData])
+  }, [graphData, deviceInfo.isMobile])
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 md:h-12 md:w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center h-full w-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
       </div>
     )
   }
@@ -174,32 +184,32 @@ export default function WordNetwork() {
   const getNodeSize = (time: number) => {
     let baseMultiplier = 1
     if (deviceInfo.isSmallMobile) {
-      baseMultiplier = 0.6
+      baseMultiplier = 0.7
     } else if (deviceInfo.isMobile) {
-      baseMultiplier = 0.8
+      baseMultiplier = 0.9
     }
 
     if (time >= 10) {
-      return 15 * baseMultiplier
+      return 18 * baseMultiplier
     } else if (time >= 5) {
-      return 12 * baseMultiplier
+      return 14 * baseMultiplier
     } else if (time >= 1) {
-      return 8 * baseMultiplier
+      return 10 * baseMultiplier
     } else {
-      return 5 * baseMultiplier
+      return 6 * baseMultiplier
     }
   }
 
   const getFontSize = (globalScale: number) => {
-    let baseFontSize = 14 // より大きな基本フォントサイズ
+    let baseFontSize = 16 // モバイル用により大きなフォントサイズ
     if (deviceInfo.isSmallMobile) {
-      baseFontSize = 10
-    } else if (deviceInfo.isMobile) {
       baseFontSize = 12
+    } else if (deviceInfo.isMobile) {
+      baseFontSize = 14
     }
 
-    // ズームレベルに応じてフォントサイズを調整（最小値を大きく）
-    return Math.max(8, baseFontSize / Math.max(globalScale, 0.8))
+    // ズームレベルに応じてフォントサイズを調整
+    return Math.max(10, baseFontSize / Math.max(globalScale, 0.6))
   }
 
   const getLinkWidth = (value: number) => {
@@ -213,11 +223,11 @@ export default function WordNetwork() {
   }
 
   return (
-    <div ref={containerRef} className="w-full h-full relative touch-manipulation">
-      {/* 期間情報表示 */}
+    <div ref={containerRef} className="w-full h-full relative touch-manipulation overflow-hidden">
+      {/* 期間情報表示 - モバイルでは小さく */}
       {selectedPeriod !== "all" && (
-        <div className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10 bg-background/90 backdrop-blur-sm p-1.5 sm:p-2 md:p-3 rounded text-xs border shadow-sm max-w-48 sm:max-w-none">
-          <div className="font-medium text-xs sm:text-sm truncate">
+        <div className="absolute top-1 left-1 z-10 bg-background/90 backdrop-blur-sm p-2 rounded text-xs border shadow-sm max-w-32 sm:max-w-48">
+          <div className="font-medium text-xs truncate">
             {availablePeriods.find((p) => p.value === selectedPeriod)?.label}
           </div>
           <div className="text-xs mt-1 text-muted-foreground">ノード: {graphData.nodes.length}</div>
@@ -226,7 +236,7 @@ export default function WordNetwork() {
 
       {/* モバイル用操作ヒント */}
       {deviceInfo.isMobile && graphData.nodes.length > 0 && (
-        <div className="absolute bottom-1 left-1 right-1 z-10 bg-background/80 backdrop-blur-sm p-2 rounded text-xs text-center text-muted-foreground border">
+        <div className="absolute bottom-2 left-2 right-2 z-10 bg-background/80 backdrop-blur-sm p-2 rounded text-xs text-center text-muted-foreground border">
           ピンチでズーム・ドラッグで移動
         </div>
       )}
@@ -247,7 +257,7 @@ export default function WordNetwork() {
           const colors = ["#ff6b6b", "#48dbfb", "#1dd1a1", "#feca57", "#54a0ff", "#5f27cd", "#ff9ff3", "#00d2d3"]
           return colors[node.group % colors.length]
         }}
-        nodeRelSize={deviceInfo.isSmallMobile ? 4 : deviceInfo.isMobile ? 5 : 6}
+        nodeRelSize={deviceInfo.isSmallMobile ? 5 : deviceInfo.isMobile ? 6 : 7}
         nodeVal={(node: any) => getNodeSize(node.time)}
         linkWidth={(link: any) => getLinkWidth(link.value)}
         linkColor={() => (theme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)")}
@@ -261,21 +271,21 @@ export default function WordNetwork() {
           ctx.textBaseline = "middle"
           ctx.fillStyle = theme === "dark" ? "white" : "black"
 
-          // テキストシャドウ
+          // より強いテキストシャドウ
           ctx.shadowColor = theme === "dark" ? "black" : "white"
-          ctx.shadowBlur = 2
+          ctx.shadowBlur = 3
           ctx.shadowOffsetX = 1
           ctx.shadowOffsetY = 1
 
           // モバイルでの表示調整
           let displayLabel = label
-          if (deviceInfo.isSmallMobile && label.length > 6) {
+          if (deviceInfo.isSmallMobile && label.length > 5) {
             displayLabel = label.substring(0, 4) + "..."
-          } else if (deviceInfo.isMobile && label.length > 8) {
+          } else if (deviceInfo.isMobile && label.length > 7) {
             displayLabel = label.substring(0, 6) + "..."
           }
 
-          const yOffset = deviceInfo.isSmallMobile ? 12 : deviceInfo.isMobile ? 15 : 18
+          const yOffset = deviceInfo.isSmallMobile ? 15 : deviceInfo.isMobile ? 18 : 20
           ctx.fillText(displayLabel, node.x, node.y + yOffset)
           ctx.shadowBlur = 0
           ctx.shadowOffsetX = 0
@@ -289,28 +299,32 @@ export default function WordNetwork() {
         // 中央配置とズーム設定
         onEngineStop={() => {
           if (graphRef.current) {
-            graphRef.current.centerAt(0, 0, 1000)
+            graphRef.current.centerAt(0, 0, 500)
           }
         }}
         // パフォーマンス最適化
-        cooldownTicks={deviceInfo.isSmallMobile ? 30 : deviceInfo.isMobile ? 50 : 100}
+        cooldownTicks={deviceInfo.isSmallMobile ? 30 : deviceInfo.isMobile ? 40 : 100}
         d3AlphaDecay={deviceInfo.isMobile ? 0.05 : 0.0228}
         d3VelocityDecay={deviceInfo.isMobile ? 0.3 : 0.4}
         // タッチ操作の最適化
-        enableNodeDrag={!deviceInfo.isMobile} // モバイルではノードドラッグを無効化
+        enableNodeDrag={!deviceInfo.isMobile}
         enableZoomInteraction={true}
         enablePanInteraction={true}
         // 初期ズームレベル
-        zoom={1}
+        zoom={deviceInfo.isMobile ? 0.8 : 1}
         // 力学シミュレーション設定
         d3Force="charge"
         d3ForceConfig={{
           charge: {
-            strength: deviceInfo.isMobile ? -100 : -200,
-            distanceMax: deviceInfo.isMobile ? 200 : 400,
+            strength: deviceInfo.isMobile ? -80 : -200,
+            distanceMax: deviceInfo.isMobile ? 150 : 400,
           },
           link: {
-            distance: deviceInfo.isMobile ? 50 : 80,
+            distance: deviceInfo.isMobile ? 40 : 80,
+          },
+          center: {
+            x: dimensions.width / 2,
+            y: dimensions.height / 2,
           },
         }}
       />

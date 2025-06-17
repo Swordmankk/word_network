@@ -55,10 +55,12 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* モバイルでのスクロール防止 */
+    overflow-x: hidden;
   }
 }
 
-/* モバイル用のスクロール最適化 */
+/* モバイル用の最適化 */
 @layer utilities {
   .mobile-scroll {
     -webkit-overflow-scrolling: touch;
@@ -70,27 +72,42 @@
   }
 }
 
-/* 小さな画面での最適化 */
-@media (max-width: 480px) {
-  .touch-manipulation {
-    touch-action: pan-x pan-y pinch-zoom;
+/* モバイル専用スタイル */
+@media (max-width: 768px) {
+  body {
+    /* モバイルでのズーム防止 */
+    touch-action: pan-x pan-y;
+    /* アドレスバーの高さ変動に対応 */
+    height: 100vh;
+    height: 100dvh; /* Dynamic Viewport Height */
   }
 
-  /* 小さなフォントサイズの調整 */
-  .text-xs {
-    font-size: 0.7rem;
+  .touch-manipulation {
+    touch-action: pan-x pan-y pinch-zoom;
   }
 
   /* ボタンのタッチターゲットサイズ確保 */
   button {
     min-height: 44px;
   }
+
+  /* モバイルでのフォント調整 */
+  .text-xs {
+    font-size: 0.7rem;
+  }
+}
+
+/* 小型モバイル専用 */
+@media (max-width: 480px) {
+  .text-xs {
+    font-size: 0.65rem;
+  }
 }
 
 /* 横画面での調整 */
 @media (max-height: 500px) and (orientation: landscape) {
   .mobile-landscape-adjust {
-    padding: 0.5rem;
+    padding: 0.25rem;
   }
 }
 
@@ -99,5 +116,13 @@
   .high-dpi-text {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* iOS Safari対応 */
+@supports (-webkit-touch-callout: none) {
+  body {
+    /* iOS Safariでのアドレスバー対応 */
+    height: -webkit-fill-available;
   }
 }
