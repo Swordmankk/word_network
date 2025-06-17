@@ -1,27 +1,17 @@
 "use client"
 
-// K-means clustering implementation
 export function kmeansClustering(nodes: any[], links: any[]) {
-  // より実践的なK-means実装
-  // 実際のK-means実装では特徴ベクトルが必要ですが、
-  // ここではノードの接続パターンと時間に基づいて簡易的なクラスタリングを行います
-
-  const k = 5 // クラスタ数
+  const k = 5
   const maxIterations = 10
 
   if (nodes.length === 0) return []
   if (nodes.length <= k) return nodes.map((node, i) => ({ ...node, group: i }))
 
-  // ノードの特徴量として時間と接続数を使用
   const features: { [key: string]: { time: number; connections: number } } = {}
   nodes.forEach((node) => {
-    features[node.id] = {
-      time: node.time,
-      connections: 0,
-    }
+    features[node.id] = { time: node.time, connections: 0 }
   })
 
-  // 接続数をカウント
   links.forEach((link) => {
     if (features[link.source]) {
       features[link.source].connections = (features[link.source].connections || 0) + 1
@@ -31,7 +21,6 @@ export function kmeansClustering(nodes: any[], links: any[]) {
     }
   })
 
-  // 初期クラスタ中心をランダムに選択
   const centroids: { time: number; connections: number }[] = []
   const usedIndices = new Set<number>()
 
@@ -47,11 +36,9 @@ export function kmeansClustering(nodes: any[], links: any[]) {
     }
   }
 
-  // K-meansアルゴリズム
   const assignments = Array(nodes.length).fill(0)
 
   for (let iter = 0; iter < maxIterations; iter++) {
-    // 各ノードを最も近い中心に割り当て
     let changed = false
 
     nodes.forEach((node, i) => {
@@ -60,8 +47,7 @@ export function kmeansClustering(nodes: any[], links: any[]) {
       let bestCluster = 0
 
       centroids.forEach((centroid, j) => {
-        // 時間と接続数の正規化距離
-        const timeDist = Math.abs(nodeFeature.time - centroid.time) / 12 // 最大時間で正規化
+        const timeDist = Math.abs(nodeFeature.time - centroid.time) / 12
         const connDist =
           Math.abs(nodeFeature.connections - centroid.connections) /
           Math.max(1, Math.max(...Object.values(features).map((f) => f.connections)))
@@ -80,10 +66,8 @@ export function kmeansClustering(nodes: any[], links: any[]) {
       }
     })
 
-    // 収束したら終了
     if (!changed) break
 
-    // クラスタ中心を更新
     const newCentroids = Array(k)
       .fill(null)
       .map(() => ({ time: 0, connections: 0, count: 0 }))
@@ -97,7 +81,6 @@ export function kmeansClustering(nodes: any[], links: any[]) {
       newCentroids[cluster].count++
     })
 
-    // 平均を計算して新しい中心に
     newCentroids.forEach((centroid, i) => {
       if (centroid.count > 0) {
         centroids[i] = {
@@ -108,7 +91,6 @@ export function kmeansClustering(nodes: any[], links: any[]) {
     })
   }
 
-  // 結果を返す
   return nodes.map((node, i) => ({
     ...node,
     group: assignments[i],

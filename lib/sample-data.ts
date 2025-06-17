@@ -1,4 +1,3 @@
-// 期間情報を含むサンプルデータ
 export const sampleWordData = [
   { word: "プログラミング", frequency: 120, time: 12.5, period: "2023-Q1" },
   { word: "機械学習", frequency: 85, time: 8.2, period: "2023-Q1" },
@@ -32,13 +31,12 @@ export const sampleWordData = [
   { word: "ハイパーパラメータ", frequency: 35, time: 1.9, period: "2024-Q2" },
 ]
 
-// 利用可能な期間のリスト
 export const availablePeriods = [
   { value: "all", label: "すべての期間" },
-  { value: "2023-Q1", label: "2023年 第1四半期" },
-  { value: "2023-Q2", label: "2023年 第2四半期" },
-  { value: "2023-Q3", label: "2023年 第3四半期" },
-  { value: "2023-Q4", label: "2023年 第4四半期" },
-  { value: "2024-Q1", label: "2024年 第1四半期" },
-  { value: "2024-Q2", label: "2024年 第2四半期" },
+  { value: "2023-Q1", label: "2023年 4月~6月 " },
+  { value: "2023-Q2", label: "2023年 7月~9月" },
+  { value: "2023-Q3", label: "2023年 10月~12月" },
+  { value: "2023-Q4", label: "2024年 1月~3月" },
+  { value: "2024-Q1", label: "2024年 4月~6月" },
+  { value: "2024-Q2", label: "2024年 7月~12月" },
 ]
