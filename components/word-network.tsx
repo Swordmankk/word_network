@@ -161,16 +161,16 @@ export default function WordNetwork() {
     processData()
   }, [threshold, minTime, maxTime, selectedPeriod])
 
-  // グラフの中央配置
+  // グラフの中央配置と全体表示
   useEffect(() => {
     if (graphRef.current && graphData.nodes.length > 0) {
-      // グラフを中央に配置
+      // 少し遅延を入れてからフィット処理を実行
       setTimeout(() => {
-        graphRef.current.centerAt(0, 0, 1000)
-        graphRef.current.zoom(deviceInfo.isMobile ? 0.8 : 1, 1000)
-      }, 100)
+        // ネットワーク全体を画面にフィット
+        graphRef.current.zoomToFit(400, 50) // duration: 400ms, padding: 50px
+      }, 200)
     }
-  }, [graphData, deviceInfo.isMobile])
+  }, [graphData])
 
   if (loading) {
     return (
@@ -298,8 +298,11 @@ export default function WordNetwork() {
         }}
         // 中央配置とズーム設定
         onEngineStop={() => {
-          if (graphRef.current) {
-            graphRef.current.centerAt(0, 0, 500)
+          if (graphRef.current && graphData.nodes.length > 0) {
+            // シミュレーション完了後に全体をフィット
+            setTimeout(() => {
+              graphRef.current.zoomToFit(400, deviceInfo.isMobile ? 30 : 50)
+            }, 100)
           }
         }}
         // パフォーマンス最適化
@@ -310,8 +313,8 @@ export default function WordNetwork() {
         enableNodeDrag={!deviceInfo.isMobile}
         enableZoomInteraction={true}
         enablePanInteraction={true}
-        // 初期ズームレベル
-        zoom={deviceInfo.isMobile ? 0.8 : 1}
+        // 初期ズームレベル（zoomToFitを使うので削除）
+        // zoom={deviceInfo.isMobile ? 0.8 : 1}
         // 力学シミュレーション設定
         d3Force="charge"
         d3ForceConfig={{
@@ -322,10 +325,7 @@ export default function WordNetwork() {
           link: {
             distance: deviceInfo.isMobile ? 40 : 80,
           },
-          center: {
-            x: dimensions.width / 2,
-            y: dimensions.height / 2,
-          },
+          // center設定を削除（zoomToFitが自動調整するため）
         }}
       />
     </div>
