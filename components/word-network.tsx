@@ -115,14 +115,22 @@ export default function WordNetwork() {
     processData()
   }, [minTime, maxTime, selectedPeriod])
 
-  // 全体表示
+  // 全体表示 - より安全な実装
   useEffect(() => {
     if (graphRef.current && graphData.nodes.length > 0) {
-      setTimeout(() => {
-        graphRef.current.zoomToFit(400, isMobile ? 30 : 50)
-      }, 200)
+      const timer = setTimeout(() => {
+        try {
+          if (graphRef.current && typeof graphRef.current.zoomToFit === "function") {
+            graphRef.current.zoomToFit(400, isMobile ? 30 : 50)
+          }
+        } catch (error) {
+          console.warn("zoomToFit failed:", error)
+        }
+      }, 500) // 少し長めの遅延
+
+      return () => clearTimeout(timer)
     }
-  }, [graphData, isMobile])
+  }, [graphData, isMobile, dimensions]) // dimensionsも依存配列に追加
 
   if (loading) {
     return (
@@ -207,8 +215,14 @@ export default function WordNetwork() {
         }}
         onEngineStop={() => {
           if (graphRef.current && graphData.nodes.length > 0) {
-            setTimeout(() => {
-              graphRef.current.zoomToFit(400, isMobile ? 30 : 50)
+            const timer = setTimeout(() => {
+              try {
+                if (graphRef.current && typeof graphRef.current.zoomToFit === "function") {
+                  graphRef.current.zoomToFit(400, isMobile ? 30 : 50)
+                }
+              } catch (error) {
+                console.warn("zoomToFit failed in onEngineStop:", error)
+              }
             }, 100)
           }
         }}
