@@ -27,13 +27,16 @@ export default function Home() {
 
   if (isFullscreen || isMobile) {
     return (
-      <div className="fixed inset-0 bg-background z-50">
-        <div className="absolute top-2 right-2 z-10 flex gap-2">
+      <div
+        className="fixed inset-0 z-50"
+        style={{ background: "linear-gradient(135deg, #fce7f3 0%, #f3e8ff 50%, #e0e7ff 100%)" }}
+      >
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowSettings(!showSettings)}
-            className="bg-background/90 backdrop-blur-sm border-2"
+            className="bg-white/90 backdrop-blur-sm border-purple-200 text-purple-700 hover:bg-purple-50"
           >
             <Settings className="h-4 w-4" />
           </Button>
@@ -42,7 +45,7 @@ export default function Home() {
               variant="outline"
               size="sm"
               onClick={toggleFullscreen}
-              className="bg-background/90 backdrop-blur-sm border-2"
+              className="bg-white/90 backdrop-blur-sm border-purple-200 text-purple-700 hover:bg-purple-50"
             >
               <Minimize2 className="h-4 w-4" />
             </Button>
@@ -50,11 +53,11 @@ export default function Home() {
         </div>
 
         {showSettings && (
-          <div className="absolute top-14 left-2 right-2 z-10 bg-card/95 backdrop-blur-sm border rounded-lg shadow-lg max-h-[70vh] overflow-y-auto">
+          <div className="absolute top-16 left-4 right-4 z-10 bg-white/95 backdrop-blur-sm border border-purple-200 rounded-xl shadow-xl max-h-[70vh] overflow-y-auto">
             <div className="p-4 space-y-4">
-              <div className="flex items-center justify-between border-b pb-2">
-                <h3 className="font-semibold">設定</h3>
-                <Button variant="ghost" size="sm" onClick={() => setShowSettings(false)}>
+              <div className="flex items-center justify-between border-b border-purple-200 pb-3">
+                <h3 className="font-semibold text-purple-800">設定</h3>
+                <Button variant="ghost" size="sm" onClick={() => setShowSettings(false)} className="text-purple-600">
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -72,13 +75,16 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div
+      className="min-h-screen relative"
+      style={{ background: "linear-gradient(135deg, #fce7f3 0%, #f3e8ff 50%, #e0e7ff 100%)" }}
+    >
       {/* 設定パネル - デスクトップ */}
-      <Card className="absolute top-4 left-4 w-80 z-10 bg-card/95 backdrop-blur-sm">
+      <Card className="absolute top-6 left-6 w-80 z-10 bg-white/90 backdrop-blur-sm border-purple-200 shadow-xl">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between text-lg">
+          <CardTitle className="flex items-center justify-between text-lg text-purple-800">
             設定
-            <Button variant="ghost" size="sm" onClick={toggleFullscreen}>
+            <Button variant="ghost" size="sm" onClick={toggleFullscreen} className="text-purple-600">
               <Maximize2 className="h-4 w-4" />
             </Button>
           </CardTitle>
