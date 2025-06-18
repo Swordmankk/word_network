@@ -340,12 +340,12 @@ export default function WordNetwork() {
         d3ForceConfig={{
           // 🔧 反発力を強化してノード間距離を広げる
           charge: {
-            strength: isMobile ? -400 : -1200, // 反発力をさらに強く
+            strength: isMobile ? -800 : -2500, // 反発力をさらに強く調整
             distanceMax: isMobile ? 300 : 800, // 反発力の影響範囲を拡大
           },
           // 🔧 リンクの距離を長く
           link: {
-            distance: isMobile ? 150 : 250, // リンクの基本距離をさらに長く
+            distance: isMobile ? 200 : 350, // リンクの基本距離をさらに長く調整
             strength: 0.8,
           },
           // 🔧 中心への引力を追加（ノードが散らばりすぎるのを防ぐ）
