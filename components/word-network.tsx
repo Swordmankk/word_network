@@ -121,7 +121,8 @@ export default function WordNetwork() {
       const timer = setTimeout(() => {
         try {
           if (graphRef.current && typeof graphRef.current.zoomToFit === "function") {
-            graphRef.current.zoomToFit(600, isMobile ? 40 : 80) // より広い範囲で表示
+            // 初期表示時のパディングを増やし、よりゆったりと表示
+            graphRef.current.zoomToFit(600, isMobile ? 60 : 100)
           }
         } catch (error) {
           console.warn("zoomToFit failed:", error)
@@ -319,7 +320,8 @@ export default function WordNetwork() {
             const timer = setTimeout(() => {
               try {
                 if (graphRef.current && typeof graphRef.current.zoomToFit === "function") {
-                  graphRef.current.zoomToFit(300, isMobile ? 20 : 40)
+                  // シミュレーション停止後のパディングも調整
+                  graphRef.current.zoomToFit(300, isMobile ? 30 : 50)
                 }
               } catch (error) {
                 console.warn("zoomToFit failed in onEngineStop:", error)
