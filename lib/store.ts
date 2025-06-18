@@ -14,7 +14,7 @@ interface WordNetworkState {
 export const useWordNetworkStore = create<WordNetworkState>((set) => ({
   minTime: 0,
   setMinTime: (minTime) => set({ minTime }),
-  maxTime: 12,
+  maxTime: 12.5, // 初期値を12.5に変更
   setMaxTime: (maxTime) => set({ maxTime }),
   selectedPeriod: "all",
   setSelectedPeriod: (selectedPeriod) => set({ selectedPeriod }),

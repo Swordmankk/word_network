@@ -19,7 +19,7 @@ export function TimeFilter() {
         <Slider
           id="min-time"
           min={0}
-          max={12}
+          max={12.5} // スライダーの最大値を12.5に変更
           step={0.5}
           value={[minTime]}
           onValueChange={([value]) => setMinTime(value)}
@@ -39,13 +39,13 @@ export function TimeFilter() {
         <Slider
           id="max-time"
           min={0}
-          max={12}
+          max={12.5} // スライダーの最大値を12.5に変更
           step={0.5}
           value={[maxTime]}
           onValueChange={([value]) => setMaxTime(value)}
         />
         <p className="text-xs text-muted-foreground">
-          {maxTime === 12 ? "すべての時間を含める" : `${maxTime}時間以下の活動のみ表示`}
+          {maxTime === 12.5 ? "すべての時間を含める" : `${maxTime}時間以下の活動のみ表示`}
         </p>
       </div>
     </div>
