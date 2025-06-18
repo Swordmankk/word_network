@@ -42,51 +42,25 @@ export default function WordNetwork() {
   const { minTime, maxTime, selectedPeriod } = useWordNetworkStore()
   const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] })
   const [loading, setLoading] = useState(true)
-  const [isInitialized, setIsInitialized] = useState(false)
 
   // 固定の閾値（普通の関連性）
   const threshold = 0.5
 
-  // 画面サイズに基づく動的パラメータ計算
-  const getDynamicParams = () => {
-    const area = dimensions.width * dimensions.height
-    const nodeCount = graphData.nodes.length
-    const density = nodeCount / (area / 10000) // 10000px²あたりのノード数
-
-    // 画面サイズに応じたスケール係数
-    const sizeScale = Math.min(dimensions.width, dimensions.height) / 800
-    const densityScale = Math.max(0.3, Math.min(2, 1 / Math.sqrt(density)))
-
-    return {
-      sizeScale,
-      densityScale,
-      area,
-      nodeCount,
-      density,
-    }
-  }
-
-  // 画面全体のサイズを取得（デバウンス付き）
+  // 画面全体のサイズを取得
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout
-
     const updateDimensions = () => {
-      clearTimeout(timeoutId)
-      timeoutId = setTimeout(() => {
-        const width = window.innerWidth
-        const height = window.innerHeight
+      const width = window.innerWidth
+      const height = window.innerHeight
 
-        setIsMobile(width < 768)
-        setDimensions({ width, height })
-      }, 150) // デバウンス: 150ms
+      setIsMobile(width < 768)
+      setDimensions({ width, height })
     }
 
     updateDimensions()
     window.addEventListener("resize", updateDimensions)
-    window.addEventListener("orientationchange", () => setTimeout(updateDimensions, 300))
+    window.addEventListener("orientationchange", () => setTimeout(updateDimensions, 200))
 
     return () => {
-      clearTimeout(timeoutId)
       window.removeEventListener("resize", updateDimensions)
       window.removeEventListener("orientationchange", updateDimensions)
     }
@@ -96,7 +70,6 @@ export default function WordNetwork() {
   useEffect(() => {
     const processData = async () => {
       setLoading(true)
-      setIsInitialized(false)
 
       try {
         let filteredData = sampleWordData.filter((item) => item.time >= minTime && item.time <= maxTime)
@@ -142,44 +115,22 @@ export default function WordNetwork() {
     processData()
   }, [minTime, maxTime, selectedPeriod])
 
-  // 初期化とズーム調整
+  // 全体表示
   useEffect(() => {
-    if (graphRef.current && graphData.nodes.length > 0 && !isInitialized) {
+    if (graphRef.current && graphData.nodes.length > 0) {
       const timer = setTimeout(() => {
         try {
           if (graphRef.current && typeof graphRef.current.zoomToFit === "function") {
-            const { nodeCount } = getDynamicParams()
-            const padding = Math.max(50, Math.min(150, nodeCount * 3))
-            graphRef.current.zoomToFit(400, padding)
-            setIsInitialized(true)
+            graphRef.current.zoomToFit(600, isMobile ? 40 : 80) // より広い範囲で表示
           }
         } catch (error) {
           console.warn("zoomToFit failed:", error)
         }
-      }, 1000)
+      }, 800) // 少し長めの遅延でレイアウトを安定させる
 
       return () => clearTimeout(timer)
     }
-  }, [graphData, isInitialized])
-
-  // 画面サイズ変更時の再調整（初期化後のみ）
-  useEffect(() => {
-    if (graphRef.current && isInitialized && graphData.nodes.length > 0) {
-      const timer = setTimeout(() => {
-        try {
-          if (graphRef.current && typeof graphRef.current.zoomToFit === "function") {
-            const { nodeCount } = getDynamicParams()
-            const padding = Math.max(30, Math.min(100, nodeCount * 2))
-            graphRef.current.zoomToFit(200, padding)
-          }
-        } catch (error) {
-          console.warn("zoomToFit on resize failed:", error)
-        }
-      }, 300)
-
-      return () => clearTimeout(timer)
-    }
-  }, [dimensions, isInitialized])
+  }, [graphData, isMobile, dimensions])
 
   if (loading) {
     return (
@@ -192,20 +143,16 @@ export default function WordNetwork() {
     )
   }
 
-  // 動的パラメータの取得
-  const { sizeScale, densityScale } = getDynamicParams()
-
-  // ノードの表示サイズ（画面サイズに応じて調整）
+  // ノードの表示サイズ（見た目）- 少し小さくして重なりを軽減
   const getNodeSize = (time: number) => {
-    const baseMultiplier = isMobile ? 0.6 : 0.8
-    const scaledMultiplier = baseMultiplier * sizeScale * densityScale
-
-    if (time >= 10) return 16 * scaledMultiplier
-    if (time >= 5) return 13 * scaledMultiplier
-    if (time >= 1) return 10 * scaledMultiplier
-    return 8 * scaledMultiplier
+    const multiplier = isMobile ? 0.7 : 0.9 // サイズを少し小さく
+    if (time >= 10) return 16 * multiplier
+    if (time >= 5) return 13 * multiplier
+    if (time >= 1) return 10 * multiplier
+    return 8 * multiplier
   }
 
+  // パステルピンク・紫系のカラーパレット（画像に合わせて）
   // マルチカラーパレット（各グループを明確に区別）
   const getNodeColor = (node: any) => {
     const multiColorPalette = [
@@ -235,9 +182,8 @@ export default function WordNetwork() {
   }
 
   const getFontSize = (globalScale: number) => {
-    const baseFontSize = isMobile ? 10 : 13
-    const scaledFontSize = baseFontSize * sizeScale
-    return Math.max(8, scaledFontSize / Math.max(globalScale, 0.5))
+    const baseFontSize = isMobile ? 11 : 14 // フォントサイズも調整
+    return Math.max(8, baseFontSize / Math.max(globalScale, 0.5))
   }
 
   // 安全な数値チェック関数
@@ -250,38 +196,9 @@ export default function WordNetwork() {
     return "linear-gradient(135deg, #fce7f3 0%, #f3e8ff 50%, #e0e7ff 100%)"
   }
 
-  // 動的な力学パラメータの計算
-  const getForceConfig = () => {
-    const baseDistance = isMobile ? 60 : 80
-    const scaledDistance = baseDistance * sizeScale * densityScale
-    const chargeStrength = isMobile ? -120 : -200
-    const scaledCharge = chargeStrength * densityScale
-
-    return {
-      charge: {
-        strength: scaledCharge,
-        distanceMax: scaledDistance * 3,
-      },
-      link: {
-        distance: scaledDistance,
-        strength: 0.7,
-      },
-      center: {
-        x: dimensions.width / 2,
-        y: dimensions.height / 2,
-        strength: 0.03,
-      },
-      collide: {
-        radius: (node: any) => getNodeSize(node.time) + 10 * densityScale,
-        strength: 0.8,
-        iterations: 2,
-      },
-    }
-  }
-
   return (
     <div className="w-full h-full relative" style={{ background: createGradientBackground() }}>
-      {/* 期間情報表示 */}
+      {/* 期間情報表示 - デザインを画像に合わせて調整 */}
       {selectedPeriod !== "all" && (
         <div className="absolute top-4 left-4 z-10 bg-white/80 backdrop-blur-sm p-3 rounded-xl text-sm border border-purple-200 shadow-lg">
           <div className="font-semibold text-purple-800 truncate">
@@ -291,7 +208,7 @@ export default function WordNetwork() {
         </div>
       )}
 
-      {/* モバイル用操作ヒント */}
+      {/* モバイル用操作ヒント - デザイン調整 */}
       {isMobile && graphData.nodes.length > 0 && (
         <div className="absolute bottom-4 left-4 right-4 z-10 bg-white/80 backdrop-blur-sm p-3 rounded-xl text-sm text-center text-purple-700 border border-purple-200 shadow-lg">
           ピンチでズーム・ドラッグで移動
@@ -305,13 +222,19 @@ export default function WordNetwork() {
         height={dimensions.height}
         graphData={graphData}
         nodeLabel={(node: any) => `${node.word}\n${node.time}h`}
+        // ノードの色（パステル紫・ピンク系）
         nodeColor={getNodeColor}
-        nodeRelSize={isMobile ? 6 : 8}
+        // 当たり判定のサイズ
+        nodeRelSize={isMobile ? 8 : 10}
+        // 表示サイズ
         nodeVal={(node: any) => getNodeSize(node.time)}
-        linkWidth={(link: any) => Math.max(1, link.value * (isMobile ? 1.5 : 2) * sizeScale)}
-        linkColor={() => "rgba(139, 92, 246, 0.2)"}
+        // リンクのデザイン（紫系で統一）
+        linkWidth={(link: any) => Math.max(2, link.value * (isMobile ? 4 : 6))} // エッジをより太く
+        linkColor={() => "rgba(139, 92, 246, 0.2)"} // 薄い紫
+        // 透明な背景（グラデーションを活かすため）
         backgroundColor="transparent"
         nodeCanvasObjectMode={() => "after"}
+        // ノードのカスタム描画（エラー修正版）
         nodeCanvasObject={(node: any, ctx: any, globalScale: number) => {
           // 安全な値のチェック
           if (!node || !isValidNumber(node.x) || !isValidNumber(node.y)) {
@@ -326,26 +249,26 @@ export default function WordNetwork() {
           const nodeColor = getNodeColor(node)
 
           try {
-            // グラデーション効果のあるノード
+            // グラデーション効果のあるノード（安全な値で作成）
             const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, nodeSize)
             gradient.addColorStop(0, nodeColor)
-            gradient.addColorStop(1, nodeColor + "60")
+            gradient.addColorStop(1, nodeColor + "60") // 透明度を少し上げて軽やか
 
-            // ノードの描画
+            // ノードの描画（円形、グラデーション付き）
             ctx.beginPath()
             ctx.arc(node.x, node.y, nodeSize, 0, 2 * Math.PI)
             ctx.fillStyle = gradient
             ctx.fill()
 
-            // 境界線
+            // ノードの境界線（白い縁取り）- 少し細く
             ctx.strokeStyle = "rgba(255, 255, 255, 0.9)"
             ctx.lineWidth = 1.5
             ctx.stroke()
           } catch (error) {
-            // フォールバック描画
+            // グラデーションが失敗した場合は単色で描画
             ctx.beginPath()
             ctx.arc(node.x, node.y, nodeSize, 0, 2 * Math.PI)
-            ctx.fillStyle = nodeColor + "80"
+            ctx.fillStyle = nodeColor + "80" // 透明度を追加
             ctx.fill()
 
             ctx.strokeStyle = "rgba(255, 255, 255, 0.9)"
@@ -364,13 +287,13 @@ export default function WordNetwork() {
           ctx.textAlign = "center"
           ctx.textBaseline = "middle"
 
-          // テキストの影効果
+          // テキストの影効果 - 少し控えめに
           ctx.shadowColor = "rgba(255, 255, 255, 0.9)"
-          ctx.shadowBlur = 2
+          ctx.shadowBlur = 3
           ctx.shadowOffsetX = 0.5
           ctx.shadowOffsetY = 0.5
 
-          // テキストの色
+          // テキストの色（濃い紫）
           ctx.fillStyle = "#4C1D95"
 
           let displayLabel = label
@@ -378,7 +301,7 @@ export default function WordNetwork() {
             displayLabel = label.substring(0, 5) + "..."
           }
 
-          const textY = node.y + nodeSize + (isMobile ? 12 : 15)
+          const textY = node.y + nodeSize + (isMobile ? 15 : 18) // テキスト位置を少し近く
           if (isValidNumber(textY)) {
             ctx.fillText(displayLabel, node.x, textY)
           }
@@ -392,30 +315,56 @@ export default function WordNetwork() {
           document.body.style.cursor = node ? "pointer" : "default"
         }}
         onEngineStop={() => {
-          if (graphRef.current && graphData.nodes.length > 0 && !isInitialized) {
+          if (graphRef.current && graphData.nodes.length > 0) {
             const timer = setTimeout(() => {
               try {
                 if (graphRef.current && typeof graphRef.current.zoomToFit === "function") {
-                  const { nodeCount } = getDynamicParams()
-                  const padding = Math.max(30, Math.min(80, nodeCount * 2))
-                  graphRef.current.zoomToFit(200, padding)
+                  graphRef.current.zoomToFit(300, isMobile ? 20 : 40)
                 }
               } catch (error) {
                 console.warn("zoomToFit failed in onEngineStop:", error)
               }
-            }, 100)
+            }, 200)
           }
         }}
-        // 動的な力学パラメータ
-        cooldownTicks={isMobile ? 60 : 100}
-        d3AlphaDecay={0.02}
-        d3VelocityDecay={0.3}
+        // 🔧 重なり改善のための力学パラメータ調整
+        cooldownTicks={isMobile ? 80 : 150} // シミュレーション時間を長く
+        d3AlphaDecay={isMobile ? 0.02 : 0.015} // より緩やかな減衰
+        d3VelocityDecay={isMobile ? 0.2 : 0.3} // 速度減衰を調整
         enableNodeDrag={true}
         enableZoomInteraction={true}
         enablePanInteraction={true}
         d3Force="charge"
-        d3ForceConfig={getForceConfig()}
-        warmupTicks={isMobile ? 30 : 50}
+        d3ForceConfig={{
+          // 🔧 反発力を強化してノード間距離を広げる
+          charge: {
+            strength: isMobile ? -400 : -1200, // 反発力をさらに強く
+            distanceMax: isMobile ? 300 : 800, // 反発力の影響範囲を拡大
+          },
+          // 🔧 リンクの距離を長く
+          link: {
+            distance: isMobile ? 150 : 250, // リンクの基本距離をさらに長く
+            strength: 0.8,
+          },
+          // 🔧 中心への引力を追加（ノードが散らばりすぎるのを防ぐ）
+          center: {
+            x: dimensions.width / 2,
+            y: dimensions.height / 2,
+            strength: 0.05, // 弱い中心への引力
+          },
+          // 🔧 衝突検出を追加（ノードの重なりを物理的に防ぐ）
+          collide: {
+            radius: (node: any) => getNodeSize(node.time) + 25, // ノードサイズ + マージン
+            strength: 0.9, // 衝突回避の強度
+            iterations: 3, // 衝突計算の反復回数
+          },
+        }}
+        // 🔧 ノード配置の初期化を改善
+        onNodeClick={(node: any) => {
+          // ノードクリック時の動作（必要に応じて追加）
+        }}
+        // 🔧 ウォームアップ期間を設定
+        warmupTicks={isMobile ? 50 : 100}
       />
     </div>
   )
